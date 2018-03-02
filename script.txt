@@ -1,25 +1,263 @@
-// doi duong dan truoc khi run code
-val textFile = sc.textFile("/root/Desktop/log/nginx/access.log")
 
 
 
-val regex = "/(.+)"
+//// id content count_content
 
 
-//loc ra cac thong tin va count
+import org.apache.spark._
+
+object Sample{
 
 
-val split_word = textFile.flatMap(line => line.split(" ").filter(x => x.matches(regex))).map(word => (word,1.toLong)).reduceByKey(_+_)
+  //// Main Spark Program
+  def main(args: Array[String]) {
+  
+ 	val conf = new SparkConf()
+	conf.set("spark.master","local")
+	conf.set("spark.app.name","Sample")
+	val sc = new SparkContext(conf)
 
-// sum lai cac count va chia co so dong
-val evalution = split_word.map(_._2).sum / textFile.count()
+     
+    val textFile = sc.textFile("/home/ntm/Desktop/access_log/access.txt")
+
+	val regex = "/.+"
+
+	val split_word = textFile.flatMap(line => line.split(" ").filter(x => x.matches(regex))).map(word => (word,1.toLong)).reduceByKey(_+_)
+
+	val split = split_word.sortBy(x => -x._2)
+
+	val evalution = split_word.map(_._2).sum / textFile.count()
+
+	val output = split.zipWithIndex().map{ case(line,count) => {(count+1).toString + "," + line }}
+
+	output.coalesce(1,true).saveAsTextFile("/home/ntm/Desktop/output")
+
+ 
+    
+   sc.stop()
+  }
+}
 
 
 
-// xuat ra output
-val output = split_word.zipWithIndex().map{ case(line,count) => {(count+1).toString + "," + line }}
+////////////////////////////////////////////////////////////////////////
+
+/// Script sbt: ip time content
+
+import org.apache.spark._
+
+object Sample{
+
+case class LogRecord( clientIp: String, clientIdentity: String, user: String, dateTime: String, request:String,statusCode:Int, bytesSent:Long, referer:String, userAgent:String )
+
+val PATTERN = """^(\S+) (\S+) (\S+) \[([\w:/]+\s[+\-]\d{4})\] "(\S+) (\S+) (\S+)" (\d{3}) (\S+) "(\S+)" "([^"]*)"""".r
+
+def parseLogLine(log: String): LogRecord = {
+      try {
+        val res = PATTERN.findFirstMatchIn(log)
+ 
+        if (res.isEmpty) {
+          //println("Rejected Log Line: " + log)
+          LogRecord("Empty", "-", "-", "", "",  -1, -1, "-", "-" )
+        }
+        else {
+          val m = res.get
+          // NOTE:   HEAD does not have a content size.
+          if (m.group(9).equals("-")) {
+            LogRecord(m.group(1), m.group(2), m.group(3), m.group(4),
+              m.group(6), m.group(8).toInt, 0, m.group(10), m.group(11))
+          }
+          else {
+            LogRecord(m.group(1), m.group(2), m.group(3), m.group(4),
+              m.group(6), m.group(8).toInt, m.group(9).toLong, m.group(10), m.group(11))
+          }
+        }
+      } catch
+      {
+        case e: Exception =>
+          //println("Exception on line:" + log + ":" + e.getMessage);
+          LogRecord("Empty", "-", "-", "", "-", -1, -1, "-", "-" )
+      }
+    }
+
+  
+ 
+  //// Main Spark Program
+  def main(args: Array[String]) {
+  
+ 	val conf = new SparkConf()
+	conf.set("spark.master","local")
+	conf.set("spark.app.name","Sample")
+	val sc = new SparkContext(conf)
+
+     
+    	val logFile =  sc.textFile("/home/ntm/Desktop/access_log/access.txt")
+	    println("===== Log Count LOG FILE : %s".format(logFile.count()))
+    	val accesslog = logFile.map(parseLogLine).filter(!_.clientIp.equals("Empty"))
+
+		
+	    val output = accesslog.map(x => { x.asInstanceOf[LogRecord].clientIp + "\t " + x.asInstanceOf[LogRecord].dateTime + "\t " + x.asInstanceOf[LogRecord].request })
+
+	    println("===== Log Count: %s".format(accesslog.count()))
+      		
+
+
+	output.coalesce(1,true).saveAsTextFile("/home/ntm/Desktop/output")
+ 
+    
+   sc.stop()
+  }
+}
+///////////////////////////////////////
+///// Tag Color   
 
 
 
-output.saveAsTextFile("/root/Desktop/output")
+import org.apache.spark._
+import java.io._
+import scala.io.Source
 
+object Sample{
+  
+ 
+  //// Main Spark Program
+  def main(args: Array[String]) {
+  
+ 	val conf = new SparkConf()
+	conf.set("spark.master","local")
+	conf.set("spark.app.name","Sample")
+	val sc = new SparkContext(conf)
+
+	val sepaRank = Array(22,4,21,60)
+
+	var count_pos = 1
+	val wordline = null
+	var posMH = -1
+	var posM = -1
+	var posML = -1
+	val total01 = sepaRank(0) + sepaRank(1)
+	val total012 = sepaRank(0) + sepaRank(1) + sepaRank(2)
+	val total0123 = sepaRank(0) + sepaRank(1) + sepaRank(2) + sepaRank(3)
+
+	val textFile = sc.textFile("/home/ntm/Desktop/OUTPUT/id_content")
+	var count =0;
+	val  filename = "/home/ntm/Desktop/OUTPUT/id_content"
+	val writer = new PrintWriter(new File("/home/ntm/Desktop/testID.txt" ))
+	var rdd = "";
+
+	Source.fromFile(filename).getLines
+	  .map { x => { 
+			count  += 1;
+			if( count <= sepaRank(0))
+				    { x.concat(",1111");
+					
+					}
+			else
+			    { if (count > sepaRank(0) && count <= total01)
+				  {
+				     posMH += 1
+				     var xx = posMH % 4
+					xx match {
+						case 0 => { x.concat(",1110");
+							    
+							     }
+
+						case 1 => { x.concat(",1010");
+							   
+							    }
+
+						case 2 => { x.concat(",1001");
+							   
+							    }
+
+						case 3 => { x.concat(",0110");
+							   
+							    }
+						}
+
+				  }	
+		
+				else
+				  {
+				    if (count > total01 && count <= total012)
+					  {
+					     posM += 1
+					     var xx = posM % 6
+						xx match {
+							case 0 => { x.concat(",1100");
+								   
+								     }
+
+							case 1 => { x.concat(",1010");
+								  
+								    }
+
+							case 2 => { x.concat(",1001");
+								   
+								    }
+
+							case 3 => { x.concat(",0110");
+								   
+								    }
+							case 4 => { x.concat(",0101");
+								   
+								    }
+							case 5 => { x.concat(",0011");
+								   
+								    }
+							}
+
+					    }
+					else 
+						{
+
+							if (count > total012 && count <= total0123)
+							  {
+							     posML += 1
+							     var xx = posML % 4
+								xx match {
+									case 0 => { x.concat(",1000");
+										   
+										     }
+
+									case 1 => { x.concat(",0100");
+										  
+										    }
+
+									case 2 => { x.concat(",0010");
+										   
+										    }
+
+									case 3 => { x.concat(",0001");
+										   
+										    }
+									}
+
+							    }
+								else
+								{
+									if (count > total0123)
+									  {
+											x.concat(",0000");
+
+									  }
+								}
+						}	
+		    	
+					} 
+		    
+		
+			   }
+	
+            } 
+		}
+	  .foreach(x => writer.println(x))
+	writer.close();
+	
+	//wordline.coalesce(1,true).saveAsTextFile("/home/ntm/Desktop/output")
+
+ 
+    
+   sc.stop()
+  }
+}
