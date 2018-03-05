@@ -112,13 +112,11 @@ def parseLogLine(log: String): LogRecord = {
 ///// Tag Color   
 
 
-
 import org.apache.spark._
 import java.io._
 import scala.io.Source
 
 object Sample{
-  
  
   //// Main Spark Program
   def main(args: Array[String]) {
@@ -130,8 +128,7 @@ object Sample{
 
 	val sepaRank = Array(22,4,21,60)
 
-	var count_pos = 1
-	val wordline = null
+	var count =0;
 	var posMH = -1
 	var posM = -1
 	var posML = -1
@@ -139,11 +136,9 @@ object Sample{
 	val total012 = sepaRank(0) + sepaRank(1) + sepaRank(2)
 	val total0123 = sepaRank(0) + sepaRank(1) + sepaRank(2) + sepaRank(3)
 
-	val textFile = sc.textFile("/home/ntm/Desktop/OUTPUT/id_content")
-	var count =0;
+	
 	val  filename = "/home/ntm/Desktop/OUTPUT/id_content"
 	val writer = new PrintWriter(new File("/home/ntm/Desktop/testID.txt" ))
-	var rdd = "";
 
 	Source.fromFile(filename).getLines
 	  .map { x => { 
@@ -162,15 +157,15 @@ object Sample{
 							    
 							     }
 
-						case 1 => { x.concat(",1010");
+						case 1 => { x.concat(",1101");
 							   
 							    }
 
-						case 2 => { x.concat(",1001");
+						case 2 => { x.concat(",1011");
 							   
 							    }
 
-						case 3 => { x.concat(",0110");
+						case 3 => { x.concat(",0111");
 							   
 							    }
 						}
@@ -254,10 +249,6 @@ object Sample{
 	  .foreach(x => writer.println(x))
 	writer.close();
 	
-	//wordline.coalesce(1,true).saveAsTextFile("/home/ntm/Desktop/output")
-
- 
-    
    sc.stop()
   }
 }
