@@ -153,3 +153,32 @@ object Sample{
 	   sc.stop()
   }
 }
+
+///////////// group time  Ip, content
+
+
+import org.apache.commons.io.IOUtils
+import java.net.URL
+import java.nio.charset.Charset
+import org.apache.spark.sql.functions.unix_timestamp
+
+// create case class Grouptime
+case class Grouptime(ip:String, time :String, content:String)
+
+val input = sc.textFile("/home/ntm/Desktop/access_log/ip_time_content")
+
+
+val data_parse =  input.map(s => s.split(",")).map(s => Grouptime(s(0).toString,s(1).toString,s(2).toString))
+
+// cast time(String) to timestamp
+val data_frame = data_parse.toDF().withColumn("timestamp", unix_timestamp($"time","dd/MMM/yyyy:HH:mm:ss").cast("timestamp"))
+data_frame.show()
+
+// groupBy follow time asc
+val data_full = data_frame.groupBy(window($"timestamp", "2 seconds").as("time_interval"))
+    .agg(collect_list("ip"),collect_list("content"))
+    .orderBy($"time_interval".asc)
+    
+data_full.show()
+data_full.registerTempTable("data_full")
+
