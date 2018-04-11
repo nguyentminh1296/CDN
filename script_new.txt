@@ -268,4 +268,54 @@ val logip = id_content_number.map(s => s.split(",")).map(
 logip.registerTempTable("logContent")
 
 ==================================\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\=======================================================
+===================================***************************************************==================================================
 
+/**
+ Loc luot truy cap cua  1 ip
+**/
+
+
+import org.apache.commons.io.IOUtils
+import java.nio.charset.Charset
+import org.apache.spark.sql.SQLContext._
+import spark.implicits._
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions._
+import java.sql.Timestamp
+
+ // ** lay 4 cot va sort theo ip ****///
+ val logFile = sc.textFile("/home/ntm/Desktop/access_log/1_46_198_53")
+ case class Log(ip:String, time :String, content:String, refer : String)
+    val data_log  =  logFile.map(s => s.split(",")).map(s => Log(s(0).toString,s(1).toString,s(2).toString,s(3).toString))
+
+    val data_frame = data_log.toDF()
+	//data_frame.sort("ip","time")  /**  sort theo ip, time  **/
+    val data    =    data_frame.withColumn("timestamp", unix_timestamp($"time","dd/MMM/yyyy:HH:mm:ss").cast("timestamp"))
+     
+    val  data_collect = data.collect();
+    var i =0;
+    var firstx = data_collect(0);
+    for( i <- 0 to (data_collect.length -1) )
+        {
+            var row = data_collect(i);
+                    if((i == 0) || (row(3) != firstx(3)) )
+                         { 
+                             println(row(3) + "  " + row(4));
+                             firstx = row;
+                         }
+                    else if(row(3) == firstx(3))
+                    {
+						/* durationRDD   thoi gian truy cap trong bao lau*/
+                        var durationRDD =(Timestamp.valueOf(row(4).toString).getTime - Timestamp.valueOf(firstx(4).toString).getTime)/1000;
+                        if(durationRDD  > 10 )
+                        {
+                            println(row(3) + "   " + row(4));
+                             firstx = row;
+                        }
+                        
+                    }
+        }
+    
+
+
+===================================***************************************************==================================================
